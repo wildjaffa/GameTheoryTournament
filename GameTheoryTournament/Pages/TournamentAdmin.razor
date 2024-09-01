@@ -1,0 +1,92 @@
+﻿@page "/tournament-admin"
+
+<PageTitle>Tournament Admin</PageTitle>
+
+@using GameTheoryTournament.Data
+@using GameTheoryTournament.Models
+@using GameTheoryTournament.Services
+@inject GameTheoryService GameTheoryService
+
+<h1>Tournament Admin</h1>
+
+<p>Use this page to manage the tournament.</p>
+
+@if (tournament.Id == Guid.Empty)
+{
+    <EditForm Model="tournament">
+        @if (attemptedFetch)
+        {
+            <p>Failed to find that Tournament</p>
+        }
+        <InputText @bind-Value="tournament.Name" />
+        <button @onclick="LoadExistingTournament">Load Tournament</button>
+        <button @onclick=CreateNewTournament>Create New Tournament</button>
+    </EditForm>
+}
+else
+{
+    <p>Current tournament: @tournament.Name</p>
+    <p>Players:</p>
+    <ul>
+        @foreach (var player in tournament.Users)
+        {
+            <li>@player.Name - @player.Score</li>
+        }
+    </ul>
+    @if (tournament.Matches.Count == 0)
+    {
+        <button @onclick="StartTournament">Start Tournament</button>
+    }
+    else 
+    {
+        <p>Current Matches:</p>
+        <ul>
+            @foreach (var match in tournament.Matches.Where(m => m.State == Models.Enums.MatchStateEnum.InProgress))
+            {
+                <li>@match.Player1.Name vs @match.Player2.Name</li>
+            }
+        </ul>
+    }
+}
+
+
+@code {
+    private bool attemptedFetch = false;
+    private Tournament tournament = new Tournament();
+
+    protected override void OnInitialized()
+    {
+        GameTheoryService.Notify += OnNotify;
+        base.OnInitialized();
+    }
+
+    public async Task OnNotify(Guid tournamentId)
+    {
+        if (tournament.Id != tournamentId)
+        {
+            return;
+        }
+
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+
+    private void CreateNewTournament()
+    {
+        tournament = GameTheoryService.CreateTournament(tournament.Name);
+    }
+
+    private void StartTournament()
+    {
+        GameTheoryService.StartTournament(tournament.Id);
+    }
+
+    private void LoadExistingTournament()
+    {
+        attemptedFetch = true;
+        var foundTournament = GameTheoryService.GetTournamentByName(tournament.Name);
+        tournament = foundTournament ?? new Tournament();
+    }
+}

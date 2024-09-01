@@ -1,0 +1,79 @@
+﻿@page "/join-tournament"
+
+<PageTitle>Join Tournament</PageTitle>
+
+@using GameTheoryTournament.Data
+@using GameTheoryTournament.Models
+@using GameTheoryTournament.Services
+@inject GameTheoryService GameTheoryService
+
+<h1>Join Tournament</h1>
+
+<p>Find a tournament to join</p>
+
+@if (tournament.Id == Guid.Empty)
+{
+    <EditForm Model="tournament">
+        @if (attemptedFetch)
+        {
+            <p>Failed to find that Tournament</p>
+        }
+        <InputText @bind-Value="tournament.Name" />
+        <button @onclick="LoadExistingTournament">Load Tournament</button>
+    </EditForm>
+}
+else
+{
+    if (user.Id == Guid.Empty)
+    {
+        <EditForm Model="user">
+            
+            <InputText @bind-Value="user.Name" />
+            <button @onclick="AddUserToTournament">Create User</button>
+        </EditForm>
+    }
+    else
+    {
+        <p>Current tournament: @tournament.Name</p>
+        <p>Current tournament ID: @tournament.Id</p>
+        <p>Players Joined: @tournament.Users.Count</p>
+        
+    }
+}
+
+
+@code {
+    private bool attemptedFetch = false;
+    private Tournament tournament = new Tournament();
+    private User user = new User();
+
+    private void LoadExistingTournament()
+    {
+        attemptedFetch = true;
+        var foundTournament = GameTheoryService.GetTournamentByName(tournament.Name);
+        tournament = foundTournament ?? new Tournament();
+    }
+
+    private void AddUserToTournament()
+    {
+        user = GameTheoryService.AddUserToTournament(tournament.Id, user.Name);
+    }
+
+    protected override void OnInitialized()
+    {
+        GameTheoryService.Notify += OnNotify;
+    }
+
+    public async Task OnNotify(Guid tournamentId)
+    {
+        if (tournament.Id != tournamentId)
+        {
+            return;
+        }
+
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+}
