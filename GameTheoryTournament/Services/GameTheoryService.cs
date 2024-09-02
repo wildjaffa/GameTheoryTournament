@@ -14,6 +14,22 @@ namespace GameTheoryTournament.Services
             return Tournaments.Values.FirstOrDefault(t => t.Name.ToLower() == name.ToLower());
         }
 
+        public Tournament? GetTournamentById(Guid id)
+        {
+            return Tournaments[id];
+        }
+
+        public User? GetUserByUserAndTournamentId(Guid tournamentId, Guid userId)
+        {
+            var tournament = Tournaments[tournamentId];
+            if (tournament == null)
+            {
+                return null;
+            }
+
+            return tournament.Users.FirstOrDefault(u => u.Id == userId);
+        }
+
         public Tournament CreateTournament(string name)
         {
             var tournament = new Tournament
@@ -56,6 +72,11 @@ namespace GameTheoryTournament.Services
             }
 
             var users = tournament.Users;
+            foreach (var user in users)
+            {
+                user.Matches = new List<Match>();
+                user.PlayerStatusEnum = PlayerStatusEnum.WaitingMatch;
+            }
             var matches = new List<Match>();
             var half = users.Count / 2;
             for(var i = 0; i < half; i++)
@@ -66,11 +87,20 @@ namespace GameTheoryTournament.Services
                 {
                     Player1 = player1,
                     Player2 = player2,
-                    Rounds = new List<Round>()
+                    Rounds = new List<Round>(
+                        [
+                            new Round
+                            {
+                                Player1 = player1,
+                                Player2 = player2
+                            }
+                        ]
+                    )
                 };
                 player1.Matches.Add(match);
                 player2.Matches.Add(match);
-
+                player1.PlayerStatusEnum = PlayerStatusEnum.Playing;
+                player2.PlayerStatusEnum = PlayerStatusEnum.Playing;
                 matches.Add(match);
             }
 
@@ -143,8 +173,9 @@ namespace GameTheoryTournament.Services
                     }
                 }
             };
-
+            user.PlayerStatusEnum = PlayerStatusEnum.Playing;
             user.Matches.Add(match);
+            opponent.PlayerStatusEnum = PlayerStatusEnum.Playing;
             opponent.Matches.Add(match);
 
             StateHasChanged(tournament.Id);

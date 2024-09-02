@@ -46,6 +46,10 @@ else
                 <li>@match.Player1.Name vs @match.Player2.Name</li>
             }
         </ul>
+        @if (!tournament.Matches.Any(m => m.State == Models.Enums.MatchStateEnum.InProgress))
+        {
+            <p>Tournament is completed</p>
+        }
     }
 }
 
@@ -71,6 +75,11 @@ else
         {
             StateHasChanged();
         });
+    }
+
+    public void Dispose()
+    {
+        GameTheoryService.Notify -= OnNotify;
     }
 
     private void CreateNewTournament()

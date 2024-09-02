@@ -13,7 +13,7 @@ namespace GameTheoryTournament.Models
 
         public void CalculateAction ()
         {
-            if (Player1Action == Player2Action)
+            if (Player1Action == ActionEnum.Cooperate && Player2Action == ActionEnum.Cooperate)
             {
                 Player1Score = 1;
                 Player2Score = 1;
@@ -26,6 +26,11 @@ namespace GameTheoryTournament.Models
             else if (Player1Action == ActionEnum.Defect && Player2Action == ActionEnum.Cooperate)
             {
                 Player1Score = 2;
+                Player2Score = 0;
+            }
+            else
+            {
+                Player1Score = 0;
                 Player2Score = 0;
             }
         }

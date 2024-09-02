@@ -2,4 +2,188 @@
 
 <PageTitle>Play</PageTitle>
 
+@using GameTheoryTournament.Data
+@using GameTheoryTournament.Models
+@using GameTheoryTournament.Services
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ProtectedSessionStorage ProtectedSessionStore
+@inject GameTheoryService GameTheoryService
+
+
 <h1>Play</h1>
+
+@if (tournament == null || user == null)
+{
+    <p>Failed to load neccesary data</p>
+}
+else
+{
+    <p>Current tournament: @tournament.Name</p>
+    <p>Current user: @user.Name</p>
+    <p>Current match: @currentMatch.Player1.Name vs @currentMatch.Player2.Name</p>
+    <p>Your score @user.Score</p>
+
+    if (user.PlayerStatusEnum == Models.Enums.PlayerStatusEnum.WaitingMatch)
+    {
+        <p>Waiting for next match</p>
+    }
+    else if(user.PlayerStatusEnum == Models.Enums.PlayerStatusEnum.Playing)
+    {
+        var currentAction = currentMatch.Player1 == user ? currentRound.Player1Action : currentRound.Player2Action;
+        if (currentAction == null)
+        {
+            <button @onclick="Cooperate">Cooperate</button>
+            <button @onclick="Defect">Defect</button>
+        }
+        else
+        {
+            <p>You took action @currentAction. Waiting for other player</p>
+        }
+        
+
+        <div class="play-history">
+            <div>@currentMatch.Player1.Name</div>
+            @for(int i = 0; i < currentMatch.Rounds.Count; i++)
+            {
+                    @if (currentRound == currentMatch.Rounds[i])
+                    {
+                        <div class="play-descriptor current"></div>
+                    }
+                    else if (currentMatch.Rounds[i].Player1Action == Models.Enums.ActionEnum.Cooperate)
+                    {
+                        <div class="play-descriptor cooperate"></div>
+                    }
+                    else
+                    {
+                        <div class="play-descriptor defect"></div>
+                    }
+            }
+        </div>
+
+        <div class="play-history">
+            <div>@currentMatch.Player2.Name</div>
+            @for(int i = 0; i < currentMatch.Rounds.Count; i++)
+            {
+                    @if (currentRound == currentMatch.Rounds[i])
+                    {
+                        <div class="play-descriptor current"></div>
+                    }
+                    else if (currentMatch.Rounds[i].Player2Action == Models.Enums.ActionEnum.Cooperate)
+                    {
+                        <div class="play-descriptor cooperate"></div>
+                    }
+                    else
+                    {
+                        <div class="play-descriptor defect"></div>
+                    }
+            }
+        </div>
+    }
+    else if(user.PlayerStatusEnum == Models.Enums.PlayerStatusEnum.Finished)
+    {
+        <p>You have completed the tournament</p>
+    }
+    else
+    {
+        <p>Unknown status</p>
+    }
+}
+
+@code {
+
+    private Tournament? tournament;
+    private User? user;
+    private Match? currentMatch;
+
+    private Round? currentRound;
+
+    protected override void OnInitialized()
+    {
+        GameTheoryService.Notify += OnNotify;
+        LoadDataAsync();
+    }
+
+    private async Task Cooperate()
+    {
+        GameTheoryService.UserPlayRound(user, currentRound, Models.Enums.ActionEnum.Cooperate, currentMatch, tournament);
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+
+    private async Task Defect()
+    {
+        GameTheoryService.UserPlayRound(user, currentRound, Models.Enums.ActionEnum.Defect, currentMatch, tournament);
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+
+    private async Task LoadDataAsync()
+    {
+        tournament = (await ProtectedSessionStore.GetAsync<Tournament>("tournament")).Value;
+        user = (await ProtectedSessionStore.GetAsync<User>("user")).Value;
+        if (user == null || tournament == null)
+        {
+            return;
+        }
+        // now fetch the full objects
+        tournament = GameTheoryService.GetTournamentById(tournament.Id);
+        user = GameTheoryService.GetUserByUserAndTournamentId(tournament.Id, user.Id);
+
+        ReloadRoundData();
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+
+    private bool ReloadRoundData()
+    {
+        bool reload = false;
+        if (user.Matches.Count > 0)
+        {
+            var lastMatch = user.Matches.Last();
+            if (lastMatch != currentMatch)
+            {
+                currentMatch = lastMatch;
+                reload = true;
+            }
+
+            var lastRound = currentMatch.Rounds.Last();
+            if (lastRound != currentRound)
+            {
+                currentRound = lastRound;
+                reload = true;
+            }
+        }
+        return reload;
+    }
+
+    public void Dispose()
+    {
+        GameTheoryService.Notify -= OnNotify;
+    }
+
+
+    public async Task OnNotify(Guid tournamentId)
+    {
+        if (tournament.Id != tournamentId)
+        {
+            return;
+        }
+
+        var reload = ReloadRoundData();
+        if (!reload)
+        {
+            return;
+        }
+
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+}

@@ -5,6 +5,9 @@
 @using GameTheoryTournament.Data
 @using GameTheoryTournament.Models
 @using GameTheoryTournament.Services
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ProtectedSessionStorage ProtectedSessionStore
+@inject NavigationManager NavigationManager
 @inject GameTheoryService GameTheoryService
 
 <h1>Join Tournament</h1>
@@ -52,16 +55,23 @@ else
         attemptedFetch = true;
         var foundTournament = GameTheoryService.GetTournamentByName(tournament.Name);
         tournament = foundTournament ?? new Tournament();
+        ProtectedSessionStore.SetAsync("tournament", tournament);
     }
 
     private void AddUserToTournament()
     {
         user = GameTheoryService.AddUserToTournament(tournament.Id, user.Name);
+        ProtectedSessionStore.SetAsync("user", user);
     }
 
     protected override void OnInitialized()
     {
         GameTheoryService.Notify += OnNotify;
+    }
+
+    public void Dispose()
+    {
+        GameTheoryService.Notify -= OnNotify;
     }
 
     public async Task OnNotify(Guid tournamentId)
@@ -75,5 +85,10 @@ else
         {
             StateHasChanged();
         });
+
+        if (tournament.Matches.Any())
+        {
+            NavigationManager.NavigateTo("/play");
+        }
     }
 }

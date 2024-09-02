@@ -1,0 +1,25 @@
+.play-history {
+    display: inline-block;
+    width: 100%;
+}
+
+.play-descriptor {
+    width: 10px;
+    height: 10px;
+    display: inline-block;
+    margin-right: 5px;
+    border-radius: 100%;
+}
+
+.play-descriptor.cooperate {
+    background-color: green;
+}
+
+.play-descriptor.defect {
+    background-color: red;
+}
+
+.play-descriptor.current {
+    background-color: gray;
+}
+
