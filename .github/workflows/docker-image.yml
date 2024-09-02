@@ -15,6 +15,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build . --file ./GameTheoryTournament/Dockerfile --tag game-theory-tournament:latest
+      run: docker build . --file ./GameTheoryTournament/Dockerfile --tag sungujdj/game-theory-tournament:latest
     - name: Publish the Docker image
       run: docker push sungujdj/game-theory-tournament:latest
