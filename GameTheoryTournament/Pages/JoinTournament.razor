@@ -22,7 +22,7 @@
             <p>Failed to find that Tournament</p>
         }
         <InputText @bind-Value="tournament.Name" />
-        <button @onclick="LoadExistingTournament">Load Tournament</button>
+        <button class="btn-primary" @onclick="LoadExistingTournament">Load Tournament</button>
     </EditForm>
 }
 else
@@ -32,7 +32,7 @@ else
         <EditForm Model="user">
             
             <InputText @bind-Value="user.Name" />
-            <button @onclick="AddUserToTournament">Create User</button>
+            <button class="btn-primary" @onclick="AddUserToTournament">Create User</button>
         </EditForm>
     }
     else

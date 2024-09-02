@@ -19,8 +19,8 @@
             <p>Failed to find that Tournament</p>
         }
         <InputText @bind-Value="tournament.Name" />
-        <button @onclick="LoadExistingTournament">Load Tournament</button>
-        <button @onclick=CreateNewTournament>Create New Tournament</button>
+        <button class="btn-primary" @onclick="LoadExistingTournament">Load Tournament</button>
+        <button class="btn-primary" @onclick=CreateNewTournament>Create New Tournament</button>
     </EditForm>
 }
 else
@@ -35,7 +35,7 @@ else
     </ul>
     @if (tournament.Matches.Count == 0)
     {
-        <button @onclick="StartTournament">Start Tournament</button>
+        <button class="btn-primary" @onclick="StartTournament">Start Tournament</button>
     }
     else 
     {

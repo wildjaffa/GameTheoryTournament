@@ -20,7 +20,6 @@ else
 {
     <p>Current tournament: @tournament.Name</p>
     <p>Current user: @user.Name</p>
-    <p>Current match: @currentMatch.Player1.Name vs @currentMatch.Player2.Name</p>
     <p>Your score @user.Score</p>
 
     if (user.PlayerStatusEnum == Models.Enums.PlayerStatusEnum.WaitingMatch)
@@ -29,11 +28,13 @@ else
     }
     else if(user.PlayerStatusEnum == Models.Enums.PlayerStatusEnum.Playing)
     {
+        <p>Current match: @currentMatch.Player1.Name vs @currentMatch.Player2.Name</p>
+
         var currentAction = currentMatch.Player1 == user ? currentRound.Player1Action : currentRound.Player2Action;
         if (currentAction == null)
         {
-            <button @onclick="Cooperate">Cooperate</button>
-            <button @onclick="Defect">Defect</button>
+            <button class="btn-primary" @onclick="Cooperate">Cooperate</button>
+            <button class="btn-primary" @onclick="Defect">Defect</button>
         }
         else
         {
@@ -145,17 +146,26 @@ else
         bool reload = false;
         if (user.Matches.Count > 0)
         {
-            var lastMatch = user.Matches.Last();
+            var lastMatch = user.Matches.Where(m => m.State == Models.Enums.MatchStateEnum.InProgress).LastOrDefault();
             if (lastMatch != currentMatch)
             {
                 currentMatch = lastMatch;
                 reload = true;
+            }
+            if (currentMatch == null)
+            {
+                return reload;
             }
 
             var lastRound = currentMatch.Rounds.Last();
             if (lastRound != currentRound)
             {
                 currentRound = lastRound;
+                reload = true;
+            }
+
+            if (tournament.Users.All(u => u.PlayerStatusEnum == Models.Enums.PlayerStatusEnum.Finished))
+            {
                 reload = true;
             }
         }

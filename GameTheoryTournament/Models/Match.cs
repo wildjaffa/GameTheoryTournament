@@ -14,7 +14,7 @@ namespace GameTheoryTournament.Models
                 {
                     return MatchStateEnum.NotStarted;
                 }
-                if (Rounds.Count == GameTheoryService.MatchLength)
+                if (Rounds.Count == GameTheoryService.MatchLength && Rounds.All(r => r.Player1Score.HasValue && r.Player2Score.HasValue))
                 {
                     return MatchStateEnum.Finished;
                 }
